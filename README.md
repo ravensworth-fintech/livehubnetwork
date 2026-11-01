@@ -1,55 +1,33 @@
-# LIVEHUB — Personal Streaming Starter
+# LIVEHUB discovery bundle
 
-A lightweight, static, browser-based streaming directory. It uses one HTML file, browser storage, and HLS.js (loaded from jsDelivr) for compatible HLS playback.
+This package adds a scheduled, multi-source discovery index to the existing browser-based LIVEHUB app. It uses free public GitHub Actions runners and static JSON hosting; it does not require a paid database or video host.
 
-## Included
-- Sports-first home page and categories for Sports, Live TV, News, Entertainment, International, Favorites, and My Sources
-- Starter directory of official free streaming destinations
-- Search and favorites
-- Add your own authorized source URLs
-- Official YouTube embed support (ads may appear; this app does not block them)
-- Direct HLS (.m3u8) and MP4 playback where the source permits browser playback
-- Local browser storage for custom sources, favorites, and recent history
+## What it searches
 
-## Important playback notes
-- This is a directory/player shell, not a source provider. It does not include pirated playlists, private feeds, DRM circumvention, stream proxies, or ad removal.
-- Many broadcasters do not permit third-party embedding. Their cards open the official provider site instead.
-- A source can be free to watch but still show ads, require an account, be region-restricted, or restrict embedding.
-- Direct HLS playback requires the source to allow browser cross-origin access (CORS). If it does not, open the provider's official player.
-- 1080p depends on the original source and your connection.
-- ABC/CBS/NBC/FOX local network livestreams are not universally free online. The included cards link to official portals; local live access may require a TV provider or other eligibility.
-- This app does not block YouTube ads.
+- Reddit public search RSS for community discussions and viewing recommendations. These are **leads only**; the app does not extract or play stream URLs from discussion posts.
+- GitHub repository search for open-source live-TV and public-stream projects. Repositories are **leads only**; check licenses and source provenance.
+- The public iptv-org playlist, but direct playlist entries are imported only when their host matches an explicit `LIVEHUB_ALLOWED_HOSTS` repository variable. Host allowlisting is not proof of broadcast rights; independently verify rights before enabling playback.
+- The browser also provides one-click searches across DuckDuckGo, Reddit, GitHub and YouTube for the user's query.
 
-## Easiest setup: GitHub + Vercel (browser-only)
+## Deploy for free
 
-1. Download and unzip `livehub-starter.zip` on your computer.
-2. Open GitHub and create a new **public** repository named `livehub` (public repositories can use GitHub's free hosting/deployment integrations; the app itself contains no secrets).
-3. In the new repository, choose **Add file → Upload files**.
-4. Upload `index.html` from the unzipped folder and commit the change to the `main` branch. (You may also upload this README.)
-5. Open Vercel and sign in with the same GitHub account.
-6. Choose **Add New → Project**, import the `livehub` repository.
-7. If Vercel asks for framework settings, select **Other**. Leave Build Command and Install Command empty. Set Output Directory to `.` (a single period); `vercel.json` in this starter also records the static-site configuration.
-8. Click **Deploy**. When deployment finishes, open the generated `.vercel.app` address.
-9. Bookmark that address. The app is ready to use.
+1. Create a **private GitHub repository** for personal use and upload this folder's contents.
+2. In repository Settings → Actions → General, allow workflows to create and approve pull requests / write repository contents (or ensure the workflow's `contents: write` permission is allowed).
+3. In Settings → Secrets and variables → Actions → Variables, optionally create `LIVEHUB_ALLOWED_HOSTS` as a comma-separated list of domains you have independently verified are authorized to distribute the streams. Leave it empty by default.
+4. Open Actions → Refresh LIVEHUB discovery index → Run workflow. It will also run every six hours.
+5. Host the repository with GitHub Pages (Settings → Pages → Deploy from branch, select `main` and `/ (root)`). The resulting site serves `index.html` and `data/discovery.json` from the same origin.
 
-## Updating later
-1. Open the `livehub` repository on GitHub.
-2. Open `index.html`, choose the pencil/edit action, make the change, and commit.
-3. Vercel automatically redeploys the updated site.
-4. Refresh the site in your browser.
+GitHub Pages is public hosting: do not publish private notes, personal credentials, or anything you expect to remain private. For private access, use an access-controlled host; GitHub Pages itself does not provide private-site authentication.
 
-## Adding a channel
-1. Open the website and click **Add source**.
-2. Enter a name, category, source type, and URL.
-3. Choose:
-   - **Official website** for a provider page (opens in a new tab).
-   - **Official YouTube** for a YouTube watch/live URL (official player; ads may appear).
-   - **Direct HLS** for an authorized `.m3u8` URL.
-   - **Direct MP4** for an authorized `.mp4` URL.
-4. Save. Your custom source is stored in this browser.
+## Important limits
 
-## Storage
-Favorites, recent history, and custom sources are saved in the browser's local storage. They remain on this browser profile and are not synced to another computer. Clearing browser site data will erase them. Export/backup is not included in this starter version.
+- No service can guarantee free access to every CBS/ABC/NBC/FOX/ESPN feed, NFL game, or paid reality show. Search results may point to official provider pages that require a subscription or TV-provider login.
+- This project intentionally does not scrape or extract unauthorized Ace Stream, pirate IPTV, or subscription-bypass feeds. It does not proxy, decrypt, or remove ads.
+- Reddit/GitHub search is rate-limited and may return no results; the workflow logs failures and keeps the last committed catalogue if refresh fails before writing.
+- The direct stream allowlist is intentionally empty by default. Add a domain only after verifying that the provider permits public redistribution/embedding.
+- Browser playback still depends on CORS, codec, HLS/DASH support, DRM and provider embed policy. A URL can be reachable but not playable.
+- A static frontend cannot run continuous background crawling by itself. The scheduled GitHub Actions workflow performs discovery every six hours.
 
-## Free hosting note
-Vercel Hobby is for personal, non-commercial projects and has usage/fair-use limits. Do not use this app as a stream proxy or media host. Video plays directly from the original provider.
+## Local preview
+
+Open `index.html` directly for the UI, or run a local static server from this directory (for example `python -m http.server 8000`) and visit `http://localhost:8000`. The discovery catalogue will populate after `python discovery.py` has run with network access.
