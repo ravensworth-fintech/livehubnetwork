@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#090d16">
+<title>LIVEHUB — Personal Streaming</title>
+<style>
+:root{--bg:#090d16;--panel:#101725;--panel2:#151f30;--line:#243147;--muted:#91a0b7;--text:#eef3fb;--blue:#4c8dff;--green:#39c98a;--amber:#f4b65e}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 60% -20%,#172844 0,transparent 45%),var(--bg);color:var(--text);font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select{font:inherit}button{cursor:pointer}.app{min-height:100vh;display:grid;grid-template-columns:236px minmax(0,1fr)}
+.sidebar{border-right:1px solid var(--line);background:rgba(9,14,24,.94);padding:24px 16px;display:flex;flex-direction:column;gap:26px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:11px;padding:0 8px}.brandmark{width:36px;height:36px;border-radius:11px;background:linear-gradient(145deg,#67a5ff,#315bd1);display:grid;place-items:center;font-size:18px;box-shadow:0 8px 24px #2455a655}.brand strong{letter-spacing:2px;font-size:15px}.brand small{display:block;color:var(--muted);font-size:9px;letter-spacing:2px;margin-top:2px}
+.navlabel{color:#65748b;text-transform:uppercase;font-size:10px;font-weight:700;letter-spacing:1.5px;padding:0 12px;margin-bottom:8px}.nav{display:grid;gap:5px}.nav button{border:0;background:transparent;color:#aab6c9;text-align:left;padding:11px 12px;border-radius:9px;display:flex;gap:12px;align-items:center}.nav button:hover,.nav button.active{background:#1b2a42;color:#fff}.nav .ico{width:19px;text-align:center;font-size:16px}.sidebottom{margin-top:auto;border:1px solid var(--line);background:#111a29;border-radius:12px;padding:13px}.sidebottom strong{font-size:12px}.sidebottom p{font-size:11px;color:var(--muted);margin:5px 0 0}
+main{min-width:0;padding:25px clamp(18px,3vw,42px) 50px;max-width:1700px;width:100%;margin:auto}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:26px}.crumb{color:var(--muted);font-size:12px}.crumb b{color:#fff;font-weight:600}.actions{display:flex;gap:9px;align-items:center}.search{position:relative}.search input{width:min(300px,35vw);background:#111a29;border:1px solid var(--line);border-radius:9px;padding:10px 12px 10px 35px;color:#fff;outline:none}.search:before{content:"⌕";position:absolute;left:12px;top:6px;font-size:22px;color:#8ea0ba}.btn{border:1px solid var(--line);background:#172337;color:#eaf1fb;border-radius:9px;padding:10px 13px;font-weight:600}.btn:hover{border-color:#5578ac;background:#1c2d47}.btn.primary{background:var(--blue);border-color:var(--blue);color:white}.btn.small{padding:7px 10px;font-size:12px}
+h1{font-size:26px;letter-spacing:-.6px;margin:0 0 5px}.sub{color:var(--muted);margin:0 0 23px}.eyebrow{color:#8ea8cb;text-transform:uppercase;letter-spacing:1.6px;font-size:10px;font-weight:800;margin-bottom:8px}
+.hero{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(245px,.8fr);gap:16px;margin-bottom:28px}
+.playerbox{background:#05080e;border:1px solid #26344a;border-radius:15px;overflow:hidden;min-height:330px;position:relative;display:flex;flex-direction:column}
+.player-screen{flex:1;min-height:260px;display:grid;place-items:center;position:relative;background:radial-gradient(ellipse at center,#1a2a43 0,#0b111c 60%,#05080e 100%)}
+.player-screen video,.player-screen iframe{width:100%;height:100%;min-height:260px;position:absolute;inset:0;border:0;background:#000;object-fit:contain}
+.placeholder{text-align:center;padding:24px;max-width:430px;z-index:1}.playicon{width:58px;height:58px;border-radius:50%;background:#ffffff16;border:1px solid #ffffff35;display:grid;place-items:center;font-size:22px;margin:0 auto 13px}.placeholder h2{font-size:17px;margin:0 0 6px}.placeholder p{color:#9aabc3;font-size:12px;margin:0 0 15px}
+.playerbar{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 15px;background:#0d1420;border-top:1px solid #1b293d}.nowtitle{font-weight:700;font-size:13px}.nowmeta{font-size:11px;color:var(--muted);margin-top:3px}.playeractions{display:flex;gap:7px;flex-wrap:wrap}
+.featurepanel{background:linear-gradient(160deg,#172944,#111a29 65%);border:1px solid #2a3d59;border-radius:15px;padding:20px;display:flex;flex-direction:column;justify-content:space-between;min-height:330px}.featurepanel h2{font-size:20px;line-height:1.2;margin:0 0 9px}.featurepanel p{color:#a9b8cd;font-size:12px;margin:0}.featurelinks{display:grid;gap:9px;margin-top:20px}.featurelink{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#ffffff0b;border:1px solid #ffffff15;border-radius:9px;padding:10px 11px;color:#edf4ff;text-decoration:none}.featurelink:hover{background:#ffffff16}.featurelink small{display:block;color:#a9b8cd;font-size:10px}.tag{font-size:9px;letter-spacing:.6px;text-transform:uppercase;border-radius:20px;padding:4px 7px;background:#183d35;color:#78e0b5;white-space:nowrap}.tag.external{background:#392d1b;color:#f4c47b}.sectionhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:24px 0 13px}.sectionhead h2{font-size:16px;margin:0}.sectionhead span{color:var(--muted);font-size:11px}
+.filters{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 15px}.chip{border:1px solid var(--line);background:#111a29;color:#9eacc0;padding:7px 11px;border-radius:20px;font-size:11px}.chip.active,.chip:hover{background:#1d3557;color:#fff;border-color:#42699d}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.card{background:linear-gradient(145deg,#141e2e,#101724);border:1px solid var(--line);border-radius:12px;padding:13px;min-width:0;transition:.15s}.card:hover{transform:translateY(-2px);border-color:#49658a}.cardtop{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}.logo{width:42px;height:42px;border-radius:11px;background:#233651;color:#dbeaff;display:grid;place-items:center;font-weight:800;font-size:13px;letter-spacing:-.4px}.fav{border:0;background:transparent;color:#73839a;font-size:20px;padding:0 3px}.fav.on{color:#ffc65f}.card h3{font-size:13px;margin:0 0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.card p{color:var(--muted);font-size:10px;margin:0 0 12px;min-height:15px}.cardfoot{display:flex;justify-content:space-between;align-items:center;gap:6px}.cardfoot small{font-size:9px;color:#8d9db4}.cardfoot button{font-size:10px;padding:6px 9px}
+.empty{border:1px dashed #34445c;border-radius:12px;padding:28px;text-align:center;color:var(--muted);grid-column:1/-1}.notice{margin:17px 0;padding:12px 14px;border:1px solid #54462c;background:#241e14;border-radius:10px;color:#d8c39d;font-size:11px}
+.footer{border-top:1px solid var(--line);margin-top:35px;padding-top:15px;color:#687990;font-size:10px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.modalback{position:fixed;inset:0;background:#02050bd9;display:none;place-items:center;padding:20px;z-index:20}.modalback.open{display:grid}.modal{width:min(520px,100%);background:#111a29;border:1px solid #31415a;border-radius:15px;padding:21px;box-shadow:0 25px 80px #0009}.modal h2{margin:0 0 5px;font-size:18px}.modal p{color:var(--muted);font-size:12px;margin:0 0 17px}.field{display:grid;gap:6px;margin:12px 0}.field label{font-size:11px;color:#b8c5d8}.field input,.field select{width:100%;background:#080e18;color:#fff;border:1px solid #30415a;border-radius:8px;padding:10px;outline:none}.modalactions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.hidden{display:none!important}
+@media(max-width:1100px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.hero{grid-template-columns:1fr}.featurepanel{min-height:auto}.featurelinks{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.app{grid-template-columns:1fr}.sidebar{height:auto;position:relative;padding:13px 14px;gap:13px;border-right:0;border-bottom:1px solid var(--line)}.brand{padding:0 4px}.navlabel,.sidebottom{display:none}.nav{display:flex;overflow:auto;padding-bottom:2px}.nav button{white-space:nowrap;padding:8px 10px;font-size:11px}.nav .ico{display:none}main{padding:19px 14px 35px}.topbar{align-items:flex-start;flex-direction:column;margin-bottom:20px}.actions{width:100%}.search{flex:1}.search input{width:100%}.hero{gap:12px}.playerbox{min-height:280px}.player-screen{min-height:220px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.featurelinks{grid-template-columns:1fr}}
+@media(max-width:420px){.grid{grid-template-columns:1fr}.playerbar{align-items:flex-start;flex-direction:column}.actions .btn{padding:9px}.featurepanel{padding:15px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand"><div class="brandmark">▶</div><div><strong>LIVEHUB</strong><small>PERSONAL STREAMING</small></div></div>
+  <div><div class="navlabel">Browse</div><nav class="nav" id="nav">
+    <button class="active" data-view="Home"><span class="ico">⌂</span>Home</button>
+    <button data-view="Sports"><span class="ico">◉</span>Sports</button>
+    <button data-view="Live TV"><span class="ico">▣</span>Live TV</button>
+    <button data-view="News"><span class="ico">◌</span>News</button>
+    <button data-view="Entertainment"><span class="ico">▤</span>Entertainment</button>
+    <button data-view="International"><span class="ico">◎</span>International</button>
+    <button data-view="Favorites"><span class="ico">☆</span>Favorites</button>
+    <button data-view="My Sources"><span class="ico">＋</span>My Sources</button>
+  </nav></div>
+  <div class="sidebottom"><strong>Personal library</strong><p>Your favorites and custom sources stay in this browser. Video plays directly from its provider.</p></div>
+</aside>
+<main>
+  <div class="topbar"><div class="crumb">LIVEHUB <span style="color:#53647d">/</span> <b id="crumb">Home</b></div><div class="actions"><div class="search"><input id="search" type="search" placeholder="Search channels and sources…"></div><button class="btn primary" id="addBtn">＋ Add source</button></div></div>
+  <div id="heading"><div class="eyebrow">Your personal streaming destination</div><h1>Find something live.</h1><p class="sub">Sports, television, news and free official streams — all in one place.</p></div>
+  <section class="hero">
+    <div class="playerbox">
+      <div class="player-screen" id="screen">
+        <div class="placeholder" id="placeholder"><div class="playicon">▶</div><h2>Choose a channel or live event</h2><p>Select a source below. Compatible HLS links play here; official services open in their own player.</p></div>
+      </div>
+      <div class="playerbar"><div><div class="nowtitle" id="nowTitle">Ready to watch</div><div class="nowmeta" id="nowMeta">Select a source to begin · Up to 1080p when provided</div></div><div class="playeractions"><button class="btn small" id="openBtn" disabled>Open official source ↗</button><button class="btn small" id="stopBtn">Stop</button></div></div>
+    </div>
+    <aside class="featurepanel"><div><div class="eyebrow">Explore live coverage</div><h2>Sports and events,<br>without the clutter.</h2><p>Browse official free event hubs. Availability, event schedules and territories are controlled by each provider.</p></div><div class="featurelinks">
+      <a class="featurelink" href="https://www.fifa.com/fifaplus" target="_blank" rel="noopener"><span>FIFA+<small>Free football coverage</small></span><span class="tag external">Provider</span></a>
+      <a class="featurelink" href="https://www.redbull.com/us-en/live-events" target="_blank" rel="noopener"><span>Red Bull TV<small>Live action sports events</small></span><span class="tag external">Provider</span></a>
+      <a class="featurelink" href="https://www.nasa.gov/live/" target="_blank" rel="noopener"><span>NASA Live<small>Free, ad-free programming</small></span><span class="tag">Ad-free</span></a>
+      <a class="featurelink" href="https://www.cbsnews.com/streaming/" target="_blank" rel="noopener"><span>CBS News 24/7<small>Free live news</small></span><span class="tag">Free</span></a>
+    </div></aside>
+  </section>
+  <div class="sectionhead"><h2 id="listTitle">Featured sources</h2><span id="count"></span></div>
+  <div class="filters" id="filters">
+    <button class="chip active" data-filter="All">All</button><button class="chip" data-filter="Sports">Sports</button><button class="chip" data-filter="Live TV">Live TV</button><button class="chip" data-filter="News">News</button><button class="chip" data-filter="Entertainment">Entertainment</button><button class="chip" data-filter="International">International</button>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="notice"><strong>Playback & availability:</strong> This app does not host, proxy, decrypt or remove ads from streams. Official providers may show advertisements, require an account, restrict locations, or block embedding. YouTube ads are not blocked. Use only sources you are authorized to access.</div>
+  <div class="footer"><span>LIVEHUB · Personal-use starter</span><span>Channel data and preferences are stored in this browser.</span></div>
+</main>
+</div>
+<div class="modalback" id="modal">
+  <div class="modal"><h2>Add a source</h2><p>Add an official website, an official YouTube livestream, or a direct stream URL you are authorized to use.</p>
+    <div class="field"><label for="fName">Channel / source name</label><input id="fName" placeholder="e.g. My local public station"></div>
+    <div class="field"><label for="fCategory">Category</label><select id="fCategory"><option>Sports</option><option>Live TV</option><option>News</option><option>Entertainment</option><option>International</option></select></div>
+    <div class="field"><label for="fType">Source type</label><select id="fType"><option value="portal">Official website (opens provider)</option><option value="youtube">Official YouTube video / live URL</option><option value="hls">Direct HLS (.m3u8) URL</option><option value="mp4">Direct MP4 URL</option></select></div>
+    <div class="field"><label for="fUrl">URL</label><input id="fUrl" placeholder="https://…"></div>
+    <div class="field"><label for="fNote">Notes (optional)</label><input id="fNote" placeholder="e.g. Free, US only, ads may appear"></div>
+    <div class="modalactions"><button class="btn" id="cancelBtn">Cancel</button><button class="btn primary" id="saveBtn">Save source</button></div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+<script>
+const seed = [
+ {id:"fifa",name:"FIFA+",category:"Sports",type:"portal",url:"https://www.fifa.com/fifaplus",note:"Free live football from participating competitions; availability varies",badge:"Free",initials:"F+"},
+ {id:"redbull",name:"Red Bull TV",category:"Sports",type:"portal",url:"https://www.redbull.com/us-en/live-events",note:"Official live-event schedule; events vary",badge:"Live events",initials:"RB"},
+ {id:"olympics",name:"Olympics",category:"Sports",type:"portal",url:"https://olympics.com/en/live",note:"Official Olympic video and live coverage hub; event availability varies",badge:"Official",initials:"OL"},
+ {id:"nasaplus",name:"NASA+",category:"Entertainment",type:"portal",url:"https://plus.nasa.gov/",note:"Free, ad-free streaming service",badge:"Ad-free",initials:"N+"},
+ {id:"nasalive",name:"NASA Live",category:"Live TV",type:"portal",url:"https://www.nasa.gov/live/",note:"Live mission coverage and official viewing options",badge:"Free",initials:"NASA"},
+ {id:"pbs",name:"PBS Live",category:"Live TV",type:"portal",url:"https://www.pbs.org/livestream/",note:"Local station livestream; geographic and station availability limits",badge:"Regional",initials:"PBS"},
+ {id:"cbsnews",name:"CBS News 24/7",category:"News",type:"portal",url:"https://www.cbsnews.com/streaming/",note:"Free live news stream on the official CBS News website",badge:"Free",initials:"CBS"},
+ {id:"pluto",name:"Pluto TV",category:"Entertainment",type:"portal",url:"https://pluto.tv/us/watch/live-tv/",note:"Free live channels; ad-supported",badge:"Ads",initials:"PTV"},
+ {id:"abc",name:"ABC — Watch Live",category:"Live TV",type:"portal",url:"https://abc.com/watch-live",note:"Local live feed may require a participating TV provider",badge:"Access varies",initials:"ABC"},
+ {id:"nbc",name:"NBC — Live",category:"Live TV",type:"portal",url:"https://www.nbc.com/live",note:"Availability and provider sign-in requirements vary",badge:"Access varies",initials:"NBC"},
+ {id:"cbs",name:"CBS — Live TV",category:"Live TV",type:"portal",url:"https://www.cbs.com/live-tv/",note:"Local CBS live feed generally requires an eligible subscription",badge:"Access varies",initials:"CBS"},
+ {id:"fox",name:"FOX — Watch",category:"Live TV",type:"portal",url:"https://www.fox.com/live/",note:"Live network access may require a TV provider",badge:"Access varies",initials:"FOX"},
+ {id:"nbcnow",name:"NBC News NOW",category:"News",type:"portal",url:"https://www.nbcnews.com/now",note:"Official NBC News streaming destination; availability may vary",badge:"Official",initials:"NOW"},
+ {id:"abcnews",name:"ABC News Live",category:"News",type:"portal",url:"https://abcnews.go.com/Live",note:"Official ABC News live coverage destination",badge:"Official",initials:"ABC"},
+ {id:"foxweather",name:"FOX Weather",category:"News",type:"portal",url:"https://www.foxweather.com/live",note:"Official weather coverage; availability may vary",badge:"Official",initials:"FOX"}
+];
+let custom = read("livehub_custom",[]), favorites = read("livehub_favorites",[]), recent = read("livehub_recent",[]);
+let view="Home", filter="All", current=null, hls=null;
+function read(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}}
+function write(k,v){localStorage.setItem(k,JSON.stringify(v))}
+function all(){return [...seed,...custom]}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function card(x){const fav=favorites.includes(x.id);return `<article class="card"><div class="cardtop"><div class="logo">${esc(x.initials||x.name.slice(0,3).toUpperCase())}</div><button class="fav ${fav?"on":""}" data-fav="${esc(x.id)}" title="Toggle favorite">${fav?"★":"☆"}</button></div><h3 title="${esc(x.name)}">${esc(x.name)}</h3><p title="${esc(x.note||x.category)}">${esc(x.note||x.category)}</p><div class="cardfoot"><small>${esc(x.category)} · ${esc(x.badge||"Personal source")}</small><button class="btn small" data-watch="${esc(x.id)}">Open ↗</button></div></article>`}
+function render(){
+ const q=document.getElementById("search").value.trim().toLowerCase();
+ let items=all();
+ if(view==="Favorites")items=items.filter(x=>favorites.includes(x.id));
+ else if(view==="My Sources")items=custom;
+ else if(view==="Sports"||view==="Live TV"||view==="News"||view==="Entertainment"||view==="International")items=items.filter(x=>x.category===view);
+ else if(filter!=="All")items=items.filter(x=>x.category===filter);
+ if(q)items=items.filter(x=>(x.name+" "+x.category+" "+(x.note||"")).toLowerCase().includes(q));
+ document.getElementById("crumb").textContent=view;
+ document.getElementById("listTitle").textContent=view==="Home"?"Featured sources":view;
+ document.getElementById("count").textContent=items.length+" sources";
+ document.getElementById("grid").innerHTML=items.length?items.map(card).join(""):`<div class="empty">No sources found. Try another category or add a source.</div>`;
+ document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===view));
+ document.querySelectorAll("#filters .chip").forEach(b=>b.classList.toggle("active",b.dataset.filter===filter));
+ document.getElementById("filters").classList.toggle("hidden",view!=="Home");
+}
+function youtubeId(url){try{const u=new URL(url);if(u.hostname.includes("youtu.be"))return u.pathname.slice(1);if(u.hostname.includes("youtube.com"))return u.searchParams.get("v")||u.pathname.split("/").filter(Boolean).pop()}catch{}return null}
+function stopPlayer(){if(hls){hls.destroy();hls=null}const screen=document.getElementById("screen");screen.innerHTML='<div class="placeholder" id="placeholder"><div class="playicon">▶</div><h2>Choose a channel or live event</h2><p>Select a source below. Compatible HLS links play here; official services open in their own player.</p></div>';current=null;document.getElementById("nowTitle").textContent="Ready to watch";document.getElementById("nowMeta").textContent="Select a source to begin · Up to 1080p when provided";document.getElementById("openBtn").disabled=true;document.getElementById("openBtn").onclick=null}
+function watch(id){
+ const x=all().find(v=>v.id===id);if(!x)return;
+ stopPlayer();current=x;document.getElementById("nowTitle").textContent=x.name;document.getElementById("nowMeta").textContent=x.category+" · "+(x.note||"Source supplied by user")+" · Quality depends on provider";
+ const open=document.getElementById("openBtn");open.disabled=false;open.onclick=()=>window.open(x.url,"_blank","noopener,noreferrer");
+ const screen=document.getElementById("screen");
+ if(x.type==="youtube"){
+   const id=youtubeId(x.url);
+   if(!id){screen.innerHTML='<div class="placeholder"><h2>Could not read YouTube video ID</h2><p>Use a standard YouTube watch, youtu.be or live URL.</p></div>';return}
+   screen.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?autoplay=1" title="${esc(x.name)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+ }else if(x.type==="hls"||x.type==="mp4"){
+   const video=document.createElement("video");video.controls=true;video.autoplay=true;video.playsInline=true;video.preload="metadata";screen.innerHTML="";screen.appendChild(video);
+   if(x.type==="mp4"){video.src=x.url;video.play().catch(()=>{})}
+   else if(video.canPlayType("application/vnd.apple.mpegurl")){video.src=x.url;video.play().catch(()=>{})}
+   else if(window.Hls&&Hls.isSupported()){hls=new Hls({enableWorker:true});hls.loadSource(x.url);hls.attachMedia(video);hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play().catch(()=>{}));hls.on(Hls.Events.ERROR,(_,data)=>{if(data.fatal)document.getElementById("nowMeta").textContent="Playback failed. The source may be offline or block browser playback (CORS). Try its official website."})}
+   else {screen.innerHTML='<div class="placeholder"><h2>HLS playback is not supported</h2><p>Try a current browser or open the provider website.</p></div>'}
+ }else{
+   screen.innerHTML=`<div class="placeholder"><div class="playicon">↗</div><h2>${esc(x.name)}</h2><p>${esc(x.note||"This source is opened on its official website.")}</p><button class="btn primary" id="insideOpen">Open official player ↗</button></div>`;
+   document.getElementById("insideOpen").onclick=()=>window.open(x.url,"_blank","noopener,noreferrer");
+ }
+ recent=[id,...recent.filter(v=>v!==id)].slice(0,12);write("livehub_recent",recent);
+}
+document.getElementById("nav").addEventListener("click",e=>{const b=e.target.closest("button[data-view]");if(!b)return;view=b.dataset.view;filter="All";render()});
+document.getElementById("filters").addEventListener("click",e=>{const b=e.target.closest("button[data-filter]");if(!b)return;filter=b.dataset.filter;render()});
+document.getElementById("grid").addEventListener("click",e=>{const w=e.target.closest("[data-watch]"),f=e.target.closest("[data-fav]");if(w)watch(w.dataset.watch);if(f){const id=f.dataset.fav;favorites=favorites.includes(id)?favorites.filter(v=>v!==id):[...favorites,id];write("livehub_favorites",favorites);render()}});
+document.getElementById("search").addEventListener("input",render);
+document.getElementById("stopBtn").onclick=stopPlayer;
+const modal=document.getElementById("modal");document.getElementById("addBtn").onclick=()=>modal.classList.add("open");document.getElementById("cancelBtn").onclick=()=>modal.classList.remove("open");
+document.getElementById("saveBtn").onclick=()=>{
+ const name=document.getElementById("fName").value.trim(),url=document.getElementById("fUrl").value.trim(),type=document.getElementById("fType").value,category=document.getElementById("fCategory").value,note=document.getElementById("fNote").value.trim();
+ if(!name||!url){alert("Please enter a name and URL.");return}
+ try{const u=new URL(url);if(!["http:","https:"].includes(u.protocol))throw 0}catch{alert("Please enter a valid http or https URL.");return}
+ const item={id:"custom-"+Date.now(),name,url,type,category,note,badge:"Custom",initials:name.slice(0,3).toUpperCase()};
+ custom.push(item);write("livehub_custom",custom);["fName","fUrl","fNote"].forEach(id=>document.getElementById(id).value="");modal.classList.remove("open");view="My Sources";render();
+};
+modal.addEventListener("click",e=>{if(e.target===modal)modal.classList.remove("open")});
+render();
+</script>
+</body>
+</html>
