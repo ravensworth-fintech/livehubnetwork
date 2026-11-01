@@ -25,6 +25,32 @@ def host_allowed(url):
     except Exception:return False
     return any(host==d or host.endswith("."+d) for d in ALLOWED_HOSTS)
 
+def extract_candidate_urls(text):
+    found=[]
+    # Extract only explicit links present in a public listing. They are not
+    # trusted unless the host is allowlisted and the URL is a supported player.
+    for raw in re.findall(r'https?://[^\s<>\"\']+', text or '', flags=re.I):
+        u=raw.rstrip(').,;]')
+        if u not in found: found.append(u)
+    return found
+
+def classify_playback(url):
+    p=urllib.parse.urlparse(url); host=(p.hostname or '').lower(); path=p.path.lower()
+    if not host_allowed(url): return None
+    if path.endswith('.m3u8'): return 'hls'
+    if path.endswith('.mp4'): return 'mp4'
+    if host in ('youtube.com','www.youtube.com','youtu.be','m.youtube.com'): return 'youtube'
+    if '/embed/' in path or '/player/' in path: return 'embed'
+    return None
+
+def playable_candidate(url,title,description,source,category):
+    playback=classify_playback(url)
+    if not playback: return None
+    return {"id":"playable:"+url,"title":title[:160],"description":description[:360],
+            "url":url,"source":source,"kind":"Playable candidate","category":category,
+            "status":"Allowlisted host and supported player format; provider rights and playback must still be confirmed",
+            "playback":playback,"playable":True}
+
 def reddit_items():
     out=[]; checked=0
     for q in REDDIT_QUERIES:
@@ -36,9 +62,15 @@ def reddit_items():
                 title=e.findtext("a:title",default="",namespaces=ns)
                 link=e.find("a:link",ns)
                 href=link.attrib.get("href","") if link is not None else ""
-                summary=re.sub("<[^>]+>"," ",e.findtext("a:content",default="",namespaces=ns))
+                raw_content=e.findtext("a:content",default="",namespaces=ns)
+                linked_urls=re.findall(r'href=[\"\'](https?://[^\"\']+)',raw_content,flags=re.I)
+                summary=re.sub("<[^>]+>"," ",raw_content)
                 if href and "reddit.com" in urllib.parse.urlparse(href).netloc:
-                    out.append({"id":"reddit:"+href,"title":title[:180],"description":re.sub(r"\s+"," ",summary)[:420],"url":href,"source":"Reddit","kind":"Community discussion","category":"Community lead","status":"Review listing; not a verified stream","playback":"External listing"})
+                    clean=re.sub(r"\s+"," ",summary)
+                    out.append({"id":"reddit:"+href,"title":title[:180],"description":clean[:420],"url":href,"source":"Reddit","kind":"Community discussion","category":"Community lead","status":"Lead only; not a verified stream","playback":"Listing only","playable":False})
+                    for candidate in linked_urls + extract_candidate_urls(clean):
+                        rec=playable_candidate(candidate,title,clean,"Reddit linked URL","Community discovery")
+                        if rec: out.append(rec)
         except Exception as e: print("reddit search failed",q,str(e)[:160])
         time.sleep(1)
     return out,checked
@@ -53,7 +85,7 @@ def news_items():
                 title=item.findtext("title",default=""); href=item.findtext("link",default="")
                 desc=re.sub("<[^>]+>"," ",item.findtext("description",default=""))
                 if href:
-                    out.append({"id":"news:"+href,"title":title[:180],"description":re.sub(r"\s+"," ",desc)[:420],"url":href,"source":"Google News","kind":"News/search result","category":"Web discovery","status":"Article lead; verify original broadcaster source","playback":"External listing"})
+                    out.append({"id":"news:"+href,"title":title[:180],"description":re.sub(r"\s+"," ",desc)[:420],"url":href,"source":"Google News","kind":"News/search result","category":"Web discovery","status":"Article lead; verify original broadcaster source","playback":"Listing only","playable":False})
         except Exception as e: print("news search failed",q,str(e)[:160])
         time.sleep(1)
     return out,checked
@@ -67,7 +99,7 @@ def github_items():
             for r in data.get("items",[]):
                 html=r.get("html_url","")
                 if not html:continue
-                out.append({"id":"github:"+str(r.get("id")),"title":r.get("full_name","Public repository"),"description":(r.get("description") or "Public repository; inspect its license and source provenance before use")[:420],"url":html,"source":"GitHub","kind":"Repository","category":"Open-source project","status":"Repository lead; stream rights not verified","playback":"External listing"})
+                out.append({"id":"github:"+str(r.get("id")),"title":r.get("full_name","Public repository"),"description":(r.get("description") or "Public repository; inspect its license and source provenance before use")[:420],"url":html,"source":"GitHub","kind":"Repository","category":"Open-source project","status":"Repository lead; stream rights not verified","playback":"Listing only","playable":False})
         except Exception as e: print("github search failed",q,str(e)[:160])
         time.sleep(1)
     return out,checked
@@ -85,7 +117,7 @@ def playlist_items():
                 m=re.search(r",([^,]+)$",line); name=m.group(1).strip() if m else "Unknown channel"
                 g=re.search(r'group-title="([^"]+)"',line); group=g.group(1) if g else "Live TV"
             elif line.startswith("http") and host_allowed(line):
-                out.append({"id":"allowlisted:"+line,"title":name[:160],"description":"Playlist entry hosted on a domain you explicitly allowlisted. Confirm the broadcaster's redistribution permission before playback.","url":line,"source":"Approved-domain playlist filter","kind":"Candidate stream","category":group[:80],"status":"Host allowlisted; rights still require confirmation","playback":"Direct stream candidate"})
+                out.append({"id":"allowlisted:"+line,"title":name[:160],"description":"Playlist entry hosted on a domain you explicitly allowlisted. Confirm the broadcaster's redistribution permission before playback.","url":line,"source":"Approved-domain playlist filter","kind":"Candidate stream","category":group[:80],"status":"Host allowlisted; rights still require confirmation","playback":"Direct stream candidate","playable":True})
     except Exception as e: print("playlist fetch failed",str(e)[:160])
     return out,checked
 
@@ -95,8 +127,11 @@ def main():
         found,n=fn(); items.extend(found); sources+=n
     # Deduplicate by URL and keep the most recent/first indexed record.
     dedup={}
-    for x in items: dedup.setdefault(x["url"],x)
-    result={"generated_at":datetime.now(timezone.utc).isoformat(),"sources_checked":sources,"items":list(dedup.values())[:1500],"notice":"Community and repository records are discovery leads, not endorsements or verified streams. Direct stream candidates require explicit host allowlisting and independent rights confirmation."}
+    for x in items:
+        # Prefer a playable record over a discussion/article lead for the same URL.
+        key=x["url"]
+        if key not in dedup or (x.get("playable") and not dedup[key].get("playable")): dedup[key]=x
+    result={"generated_at":datetime.now(timezone.utc).isoformat(),"sources_checked":sources,"items":list(dedup.values())[:1500],"notice":"Community and repository records are leads. Playable candidates are only extracted from explicit links on allowlisted hosts and supported formats; allowlisting is not proof of redistribution rights. Confirm rights and provider playback before use."}
     OUT.parent.mkdir(parents=True,exist_ok=True); OUT.write_text(json.dumps(result,indent=2),encoding="utf-8")
     print(f"Wrote {len(result['items'])} discovery records from {sources} successful source checks")
 if __name__=="__main__":main()

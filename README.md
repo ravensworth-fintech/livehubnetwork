@@ -1,33 +1,32 @@
-# LIVEHUB discovery bundle
+# LIVEHUB — in-app playback and discovery upgrade
 
-This package adds a scheduled, multi-source discovery index to the existing browser-based LIVEHUB app. It uses free public GitHub Actions runners and static JSON hosting; it does not require a paid database or video host.
+This is a static GitHub Pages frontend plus a scheduled GitHub Actions discovery index.
 
-## What it searches
+## What changed
 
-- Reddit public search RSS for community discussions and viewing recommendations. These are **leads only**; the app does not extract or play stream URLs from discussion posts.
-- GitHub repository search for open-source live-TV and public-stream projects. Repositories are **leads only**; check licenses and source provenance.
-- The public iptv-org playlist, but direct playlist entries are imported only when their host matches an explicit `LIVEHUB_ALLOWED_HOSTS` repository variable. Host allowlisting is not proof of broadcast rights; independently verify rights before enabling playback.
-- The browser also provides one-click searches across DuckDuckGo, Reddit, GitHub and YouTube for the user's query.
+- Clicking a supported discovery candidate now loads it into the LIVEHUB player instead of opening Reddit, Google, or GitHub search results in another tab.
+- Discovery records distinguish ordinary community/search leads from playable candidates.
+- The scanner extracts explicit URLs from Reddit listing content, but promotes a URL to a playable candidate only when its host is in `LIVEHUB_ALLOWED_HOSTS` and its format is supported (HLS `.m3u8`, MP4, YouTube, or an explicitly supplied `/embed/` or `/player/` URL).
+- The Add Source dialog supports official embeddable player URLs.
+- Ordinary provider homepages remain labelled as portals. LIVEHUB does not pretend a homepage is a video stream.
 
-## Deploy for free
+## Install/update in your existing repository
 
-1. Create a **private GitHub repository** for personal use and upload this folder's contents.
-2. In repository Settings → Actions → General, allow workflows to create and approve pull requests / write repository contents (or ensure the workflow's `contents: write` permission is allowed).
-3. In Settings → Secrets and variables → Actions → Variables, optionally create `LIVEHUB_ALLOWED_HOSTS` as a comma-separated list of domains you have independently verified are authorized to distribute the streams. Leave it empty by default.
-4. Open Actions → Refresh LIVEHUB discovery index → Run workflow. It will also run every six hours.
-5. Host the repository with GitHub Pages (Settings → Pages → Deploy from branch, select `main` and `/ (root)`). The resulting site serves `index.html` and `data/discovery.json` from the same origin.
+1. Download and unzip this package.
+2. In your existing `ravensworth-fintech/livehubnetwork` repository, replace `index.html`, `discovery.py`, and `README.md` with the versions in this package. Upload the `data/discovery.json` file too if it is included.
+3. Preserve `.github/workflows/refresh-discovery.yml` or use the included version.
+4. In Settings → Secrets and variables → Actions → Variables, optionally set `LIVEHUB_ALLOWED_HOSTS` to comma-separated domains you have independently confirmed are authorized to distribute or embed their streams. Example format: `public-broadcaster.example,official-provider.example`. Leave it empty until verified.
+5. Go to Actions → Refresh LIVEHUB discovery index → Run workflow.
+6. When it succeeds, wait for Pages to deploy, then hard-refresh LIVEHUB.
 
-GitHub Pages is public hosting: do not publish private notes, personal credentials, or anything you expect to remain private. For private access, use an access-controlled host; GitHub Pages itself does not provide private-site authentication.
+## Playback limits and rights
 
-## Important limits
-
-- No service can guarantee free access to every CBS/ABC/NBC/FOX/ESPN feed, NFL game, or paid reality show. Search results may point to official provider pages that require a subscription or TV-provider login.
-- This project intentionally does not scrape or extract unauthorized Ace Stream, pirate IPTV, or subscription-bypass feeds. It does not proxy, decrypt, or remove ads.
-- Reddit/GitHub search is rate-limited and may return no results; the workflow logs failures and keeps the last committed catalogue if refresh fails before writing.
-- The direct stream allowlist is intentionally empty by default. Add a domain only after verifying that the provider permits public redistribution/embedding.
-- Browser playback still depends on CORS, codec, HLS/DASH support, DRM and provider embed policy. A URL can be reachable but not playable.
-- A static frontend cannot run continuous background crawling by itself. The scheduled GitHub Actions workflow performs discovery every six hours.
+- Allowlisting is a technical filter, not proof of copyright or redistribution permission. Only add domains whose owners authorize the stream for this use.
+- A Reddit post, news article, repository, or channel homepage is not itself a playable video. Those remain discovery leads unless an explicit supported media/player URL is found.
+- Browser playback may still fail because of provider CORS rules, codecs, DRM, geographic restrictions, login requirements, or embed restrictions. LIVEHUB cannot remove or bypass those restrictions.
+- This project does not scrape or expose unauthorized subscription feeds, pirate IPTV, or subscription-bypass streams. It does not proxy, decrypt, or remove ads.
+- A static site cannot crawl continuously. GitHub Actions refreshes the index on its six-hour schedule; the frontend loads the generated JSON catalogue.
 
 ## Local preview
 
-Open `index.html` directly for the UI, or run a local static server from this directory (for example `python -m http.server 8000`) and visit `http://localhost:8000`. The discovery catalogue will populate after `python discovery.py` has run with network access.
+Run `python -m http.server 8000` in this directory and open `http://localhost:8000`. Run `python discovery.py` to refresh the JSON index (requires network access).

@@ -56,7 +56,7 @@ h1{font-size:26px;letter-spacing:-.6px;margin:0 0 5px}.sub{color:var(--muted);ma
   <section class="hero">
     <div class="playerbox">
       <div class="player-screen" id="screen">
-        <div class="placeholder" id="placeholder"><div class="playicon">▶</div><h2>Choose a channel or live event</h2><p>Select a source below. Compatible HLS links play here; official services open in their own player.</p></div>
+        <div class="placeholder" id="placeholder"><div class="playicon">▶</div><h2>Choose a channel or live event</h2><p>Select a supported stream or an official player that permits embedding.</p></div>
       </div>
       <div class="playerbar"><div><div class="nowtitle" id="nowTitle">Ready to watch</div><div class="nowmeta" id="nowMeta">Select a source to begin · Up to 1080p when provided</div></div><div class="playeractions"><button class="btn small" id="openBtn" disabled>Open official source ↗</button><button class="btn small" id="stopBtn">Stop</button></div></div>
     </div>
@@ -70,7 +70,7 @@ h1{font-size:26px;letter-spacing:-.6px;margin:0 0 5px}.sub{color:var(--muted);ma
   <section id="discoverPanel" class="hidden" style="margin:0 0 22px">
     <div class="ota-panel">
       <div class="eyebrow">Multi-source discovery</div><h3>Find free live streams and official viewing sources</h3>
-      <p>Search the refreshed LIVEHUB index and launch searches across the public web, Reddit and GitHub. Community posts are leads, not verified streams. Only sources approved for public playback are eligible for direct in-app playback.</p>
+      <p>Search the refreshed LIVEHUB index and launch searches across the public web, Reddit and GitHub. Community posts are leads. LIVEHUB promotes only supported media URLs from hosts you explicitly allowlist; other results remain leads and never open a search page when selected.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0">
         <input id="discoverQuery" type="search" placeholder="Try NFL, football, live news, PBS…" style="flex:1;min-width:210px;background:#080e18;color:#fff;border:1px solid #30415a;border-radius:8px;padding:11px">
         <button class="btn primary" id="discoverSearchBtn">Search index</button>
@@ -96,7 +96,7 @@ h1{font-size:26px;letter-spacing:-.6px;margin:0 0 5px}.sub{color:var(--muted);ma
   <div class="modal"><h2>Add a source</h2><p>Add an official website, an official YouTube livestream, or a direct stream URL you are authorized to use.</p>
     <div class="field"><label for="fName">Channel / source name</label><input id="fName" placeholder="e.g. My local public station"></div>
     <div class="field"><label for="fCategory">Category</label><select id="fCategory"><option>Sports</option><option>Live TV</option><option>Local Broadcast</option><option>News</option><option>Entertainment</option><option>International</option></select></div>
-    <div class="field"><label for="fType">Source type</label><select id="fType"><option value="portal">Official website (opens provider)</option><option value="youtube">Official YouTube video / live URL</option><option value="hls">Direct HLS / TVHeadend HLS URL (.m3u8)</option><option value="mp4">Direct MP4 URL</option></select></div>
+    <div class="field"><label for="fType">Source type</label><select id="fType"><option value="portal">Official website (opens provider)</option><option value="youtube">Official YouTube video / live URL</option><option value="embed">Official embeddable player URL</option><option value="hls">Direct HLS / TVHeadend HLS URL (.m3u8)</option><option value="mp4">Direct MP4 URL</option></select></div>
     <div class="field"><label for="fUrl">URL</label><input id="fUrl" placeholder="https://… or local tuner HLS URL"></div>
     <p style="font-size:10px;color:#91a0b7;margin:-3px 0 10px">For antenna channels, select Local Broadcast and use an HLS playback URL exposed by your local TVHeadend service. A raw HDHomeRun MPEG-TS URL is not reliably playable in every browser; TVHeadend can provide browser-friendly HLS.</p>
     <div class="field"><label for="fNote">Notes (optional)</label><input id="fNote" placeholder="e.g. Free, US only, ads may appear"></div>
@@ -176,8 +176,19 @@ function renderDiscovery(){
  const results=discoveryItems.filter(x=>!q||[x.title,x.description,x.source,x.category,x.url].join(" ").toLowerCase().includes(q)).slice(0,100);
  document.getElementById("discoverCount").textContent=`${results.length} results`;
  const grid=document.getElementById("discoverGrid");
- grid.innerHTML=results.length?results.map((x,i)=>`<article class="card"><div class="cardtop"><div class="logo">${esc((x.source||"WEB").slice(0,3).toUpperCase())}</div><span class="sourcepill">${esc(x.kind||"Listing")}</span></div><h3 title="${esc(x.title)}">${esc(x.title)}</h3><p>${esc(x.category||"Uncategorized")}</p><div class="resultmeta">${esc(x.description||"")}<br>Source: ${esc(x.source||"Public web")} · ${esc(x.status||"Review required")}</div><div class="cardfoot"><small>${esc(x.playback||"External listing")}</small><button class="btn small" data-discover-open="${i}">Open ↗</button></div></article>`).join(""):`<div class="empty">No indexed matches. Try a broader phrase or use the cross-web search links above.</div>`;
- grid.querySelectorAll("[data-discover-open]").forEach(btn=>btn.addEventListener("click",()=>{const x=results[Number(btn.dataset.discoverOpen)];if(x)window.open(x.url,"_blank","noopener,noreferrer")}));
+ grid.innerHTML=results.length?results.map((x,i)=>`<article class="card"><div class="cardtop"><div class="logo">${esc((x.source||"WEB").slice(0,3).toUpperCase())}</div><span class="sourcepill">${esc(x.kind||"Listing")}</span></div><h3 title="${esc(x.title)}">${esc(x.title)}</h3><p>${esc(x.category||"Uncategorized")}</p><div class="resultmeta">${esc(x.description||"")}<br>Source: ${esc(x.source||"Public web")} · ${esc(x.status||"Review required")}</div><div class="cardfoot"><small>${esc(x.playback||"Listing only")}</small><button class="btn small" data-discover-open="${i}">${x.playable?"Play in LIVEHUB ▶":"View lead details"}</button></div></article>`).join(""):`<div class="empty">No indexed matches. Try a broader phrase or use the cross-web search links above.</div>`;
+ grid.querySelectorAll("[data-discover-open]").forEach(btn=>btn.addEventListener("click",()=>{
+  const x=results[Number(btn.dataset.discoverOpen)]; if(!x)return;
+  if(x.playable && ["hls","mp4","youtube","embed"].includes(x.playback)){
+    watch({id:"discovery-"+btoa(unescape(encodeURIComponent(x.url))).replace(/[^a-z0-9]/gi,"").slice(0,24),name:x.title,category:x.category||"Discovered",type:x.playback,url:x.url,note:x.description||x.status||"Discovered source",badge:"Discovered",initials:(x.title||"TV").slice(0,3).toUpperCase()});
+  } else {
+    const screen=document.getElementById("screen");
+    screen.innerHTML=`<div class="placeholder"><div class="playicon">ⓘ</div><h2>${esc(x.title)}</h2><p>${esc(x.description||x.status||"This is a discovery lead, not a verified playable stream. No external search page was opened.")}</p><p>Source: ${esc(x.source||"Public web")}. LIVEHUB needs an authorized direct stream or official embeddable player URL before it can play here.</p></div>`;
+    document.getElementById("nowTitle").textContent=x.title||"Discovery lead";
+    document.getElementById("nowMeta").textContent="Not a verified playable stream";
+    document.getElementById("openBtn").disabled=true;
+  }
+}));
  const links=[
   ["Web search",`https://duckduckgo.com/?q=${encodeURIComponent(q||"free official live streams")}`],
   ["Reddit",`https://www.reddit.com/search/?q=${encodeURIComponent(q||"free official live streams")}`],
@@ -228,16 +239,21 @@ function render(){
   }
 }
 function youtubeId(url){try{const u=new URL(url);if(u.hostname.includes("youtu.be"))return u.pathname.slice(1);if(u.hostname.includes("youtube.com"))return u.searchParams.get("v")||u.pathname.split("/").filter(Boolean).pop()}catch{}return null}
-function stopPlayer(){if(hls){hls.destroy();hls=null}const screen=document.getElementById("screen");screen.innerHTML='<div class="placeholder" id="placeholder"><div class="playicon">▶</div><h2>Choose a channel or live event</h2><p>Select a source below. Compatible HLS links play here; official services open in their own player.</p></div>';current=null;document.getElementById("nowTitle").textContent="Ready to watch";document.getElementById("nowMeta").textContent="Select a source to begin · Up to 1080p when provided";document.getElementById("openBtn").disabled=true;document.getElementById("openBtn").onclick=null}
+function stopPlayer(){if(hls){hls.destroy();hls=null}const screen=document.getElementById("screen");screen.innerHTML='<div class="placeholder" id="placeholder"><div class="playicon">▶</div><h2>Choose a channel or live event</h2><p>Select a supported stream or an official player that permits embedding.</p></div>';current=null;document.getElementById("nowTitle").textContent="Ready to watch";document.getElementById("nowMeta").textContent="Select a source to begin · Up to 1080p when provided";document.getElementById("openBtn").disabled=true;document.getElementById("openBtn").onclick=null}
 function watch(id){
- const x=all().find(v=>v.id===id);if(!x)return;
+ const x=(id && typeof id==="object")?id:all().find(v=>v.id===id);if(!x)return;
  stopPlayer();current=x;document.getElementById("nowTitle").textContent=x.name;document.getElementById("nowMeta").textContent=x.category+" · "+(x.note||"Source supplied by user")+" · Quality depends on provider";
- const open=document.getElementById("openBtn");open.disabled=false;open.onclick=()=>window.open(x.url,"_blank","noopener,noreferrer");
+ const open=document.getElementById("openBtn");
+ open.disabled=x.type!=="portal";open.onclick=x.type==="portal"?()=>window.open(x.url,"_blank","noopener,noreferrer"):null;
  const screen=document.getElementById("screen");
  if(x.type==="youtube"){
    const id=youtubeId(x.url);
    if(!id){screen.innerHTML='<div class="placeholder"><h2>Could not read YouTube video ID</h2><p>Use a standard YouTube watch, youtu.be or live URL.</p></div>';return}
    screen.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?autoplay=1" title="${esc(x.name)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+ }else if(x.type==="embed"){
+   const u=new URL(x.url);
+   if(u.protocol!=="https:"){screen.innerHTML='<div class="placeholder"><h2>Secure embed required</h2><p>Use an HTTPS player URL supplied by the provider.</p></div>';return}
+   screen.innerHTML=`<iframe src="${esc(x.url)}" title="${esc(x.name)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
  }else if(x.type==="hls"||x.type==="mp4"){
    const video=document.createElement("video");video.controls=true;video.autoplay=true;video.playsInline=true;video.preload="metadata";screen.innerHTML="";screen.appendChild(video);
    if(x.type==="mp4"){video.src=x.url;video.play().catch(()=>{})}
@@ -245,10 +261,10 @@ function watch(id){
    else if(window.Hls&&Hls.isSupported()){hls=new Hls({enableWorker:true});hls.loadSource(x.url);hls.attachMedia(video);hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play().catch(()=>{}));hls.on(Hls.Events.ERROR,(_,data)=>{if(data.fatal)document.getElementById("nowMeta").textContent="Playback failed. The source may be offline or block browser playback (CORS). Try its official website."})}
    else {screen.innerHTML='<div class="placeholder"><h2>HLS playback is not supported</h2><p>Try a current browser or open the provider website.</p></div>'}
  }else{
-   screen.innerHTML=`<div class="placeholder"><div class="playicon">↗</div><h2>${esc(x.name)}</h2><p>${esc(x.note||"This source is opened on its official website.")}</p><button class="btn primary" id="insideOpen">Open official player ↗</button></div>`;
-   document.getElementById("insideOpen").onclick=()=>window.open(x.url,"_blank","noopener,noreferrer");
+   screen.innerHTML=`<div class="placeholder"><div class="playicon">↗</div><h2>${esc(x.name)}</h2><p>${esc(x.note||"This provider does not supply an in-app playable stream or approved embed URL.")}</p><p>LIVEHUB cannot play a provider homepage as if it were a video stream. Add its official embed URL or a permitted direct stream to watch here.</p></div>`;
+   
  }
- recent=[id,...recent.filter(v=>v!==id)].slice(0,12);write("livehub_recent",recent);
+ recent=[x.id,...recent.filter(v=>v!==x.id)].slice(0,12);write("livehub_recent",recent);
 }
 document.getElementById("nav").addEventListener("click",e=>{const b=e.target.closest("button[data-view]");if(!b)return;view=b.dataset.view;filter="All";render()});
 document.getElementById("filters").addEventListener("click",e=>{const b=e.target.closest("button[data-filter]");if(!b)return;filter=b.dataset.filter;render()});
