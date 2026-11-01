@@ -1,32 +1,50 @@
-# LIVEHUB — in-app playback and discovery upgrade
+# LIVEHUB public link discovery upgrade
 
-This is a static GitHub Pages frontend plus a scheduled GitHub Actions discovery index.
+This package adds a scheduled public-web discovery crawler and displays discovered links in the LIVEHUB Discover view.
 
-## What changed
+## What it does
 
-- Clicking a supported discovery candidate now loads it into the LIVEHUB player instead of opening Reddit, Google, or GitHub search results in another tab.
-- Discovery records distinguish ordinary community/search leads from playable candidates.
-- The scanner extracts explicit URLs from Reddit listing content, but promotes a URL to a playable candidate only when its host is in `LIVEHUB_ALLOWED_HOSTS` and its format is supported (HLS `.m3u8`, MP4, YouTube, or an explicitly supplied `/embed/` or `/player/` URL).
-- The Add Source dialog supports official embeddable player URLs.
-- Ordinary provider homepages remain labelled as portals. LIVEHUB does not pretend a homepage is a video stream.
+- Searches public Google News RSS and Reddit RSS for sports viewing discussions and provider information.
+- Extracts URLs from public RSS descriptions and public pages.
+- Crawls only domains explicitly listed in `LIVEHUB_ALLOWED_HOSTS`.
+- Detects supported media URL types (`.m3u8`, `.mp4`, `.mpd`, YouTube, and provider embed/player URLs).
+- Writes results to `data/discovery.json`, which the existing LIVEHUB page reads and displays.
+- Keeps ordinary search results and discussion pages as leads, not as fake playable channels.
 
-## Install/update in your existing repository
+## Important limits
 
-1. Download and unzip this package.
-2. In your existing `ravensworth-fintech/livehubnetwork` repository, replace `index.html`, `discovery.py`, and `README.md` with the versions in this package. Upload the `data/discovery.json` file too if it is included.
-3. Preserve `.github/workflows/refresh-discovery.yml` or use the included version.
-4. In Settings → Secrets and variables → Actions → Variables, optionally set `LIVEHUB_ALLOWED_HOSTS` to comma-separated domains you have independently confirmed are authorized to distribute or embed their streams. Example format: `public-broadcaster.example,official-provider.example`. Leave it empty until verified.
-5. Go to Actions → Refresh LIVEHUB discovery index → Run workflow.
-6. When it succeeds, wait for Pages to deploy, then hard-refresh LIVEHUB.
+A discovered URL is not proof that a stream is live, authorized, or embeddable. The crawler does not bypass logins, DRM, paywalls, geographic restrictions, anti-bot controls, or provider access restrictions. Only add domains for providers whose content you are authorized to display. Some providers block third-party embedding even when their pages are public.
 
-## Playback limits and rights
+This is a public-link discovery index, not a crawler of the entire internet. It uses public RSS feeds and a bounded crawl of operator-allowlisted sites.
 
-- Allowlisting is a technical filter, not proof of copyright or redistribution permission. Only add domains whose owners authorize the stream for this use.
-- A Reddit post, news article, repository, or channel homepage is not itself a playable video. Those remain discovery leads unless an explicit supported media/player URL is found.
-- Browser playback may still fail because of provider CORS rules, codecs, DRM, geographic restrictions, login requirements, or embed restrictions. LIVEHUB cannot remove or bypass those restrictions.
-- This project does not scrape or expose unauthorized subscription feeds, pirate IPTV, or subscription-bypass streams. It does not proxy, decrypt, or remove ads.
-- A static site cannot crawl continuously. GitHub Actions refreshes the index on its six-hour schedule; the frontend loads the generated JSON catalogue.
+## Configure allowed provider domains
 
-## Local preview
+In GitHub: **Settings → Secrets and variables → Actions → Variables → New repository variable**.
 
-Run `python -m http.server 8000` in this directory and open `http://localhost:8000`. Run `python discovery.py` to refresh the JSON index (requires network access).
+- Name: `LIVEHUB_ALLOWED_HOSTS`
+- Value: comma-separated hostnames, for example `example-broadcaster.com,player.example-provider.com`
+
+Use provider domains only when you have permission to display their media. Do not include URL schemes or paths. The crawler does not treat an allowlisted domain as proof of content rights.
+
+Optional variable:
+- `LIVEHUB_MAX_CRAWL_PAGES`: maximum provider pages crawled per run (default 60).
+
+## Run locally
+
+```bash
+python3 discovery.py
+```
+
+Then serve the project directory with a local web server, for example:
+
+```bash
+python3 -m http.server 8000
+```
+
+Open `http://localhost:8000`.
+
+## Deploy
+
+Replace the repository's `discovery.py`, `README.md`, and `index.html` with the files in this package, and preserve `.github/workflows/refresh-discovery.yml` and `data/`. Commit and push. The existing GitHub Actions workflow refreshes the index every six hours and can also be run manually from the Actions tab.
+
+The player can only play direct media or embeds that the provider permits the browser to load. CORS, CSP, geolocation, sign-in, and DRM restrictions may prevent playback; those restrictions cannot be fixed by extracting a URL.
